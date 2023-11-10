@@ -1,0 +1,172 @@
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.js"></script>
+    <script
+      src="https://code.jquery.com/jquery-3.4.1.min.js"
+      integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+      crossorigin="anonymous"
+    ></script>
+    <link
+      href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      [v-cloak] {
+        display: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="app">
+      <div v-cloak>
+        <!-- トップ -->
+        <div
+          v-if="pageID==0"
+          class="flex flex-row justify-center w-screen h-screen items-center bg-gray-200 p-8"
+        >
+          <div class="flex flex-col justify-center items-center">
+            <button
+              class="px-8 py-4 bg-gray-400 text-white rounded shadow"
+              v-on:click="gotoPage(1)"
+            >
+              <p class="text-2xl m-8 text-center">{{title}}</p>
+              <p class="text-xl m-8 text-center">{{sub_title}}</p>
+            </button>
+            <div class="m-4"></div>
+          </div>
+        </div>
+        <!-- 呼吸選択 -->
+        <div v-else-if="pageID==1" class="w-screen h-screen bg-gray-200">
+          <div class="flex flex-row justify-center items-center">
+            <div
+              class="flex flex-col justify-center items-center border-b-2 border-fuchsia-600"
+            >
+              <h1 class="text-xl mt-16 text-center">
+                ゲージに合わせて呼吸してください。
+              </h1>
+              <div class="m-4"></div>
+              <div class="flex justify-around">
+                <p class="text-sm m-4 text-center">設定呼吸時間
+                </p>
+                <input type="text" v-model="breath_interval" />
+                <p class="text-sm m-4 text-center">ms
+                </p>
+              </div>
+              <div class="m-4"></div>
+              <p class="text-sm m-4 text-center">
+                現在の設定:{{breath_interval/1000}}秒呼吸間隔=1分間に{{60*1000/breath_interval}}回
+              </p>
+              <div class="flex justify-around">
+                <button v-on:click="start">開始</button>
+                <div class="m-4"></div>
+
+                <button v-on:click="stop">停止</button>
+              </div>
+              <div class="flex justify-around">
+                <p class="text-4xl mt-4">{{display_time}}</p>
+              </div>
+              <!-- <div class="w-11/12 border-solid border-2 border-indigo-600 mx-auto"></div> -->
+              <div class="flex justify-between items-center w-screen px-32">
+                <div>息を吐ききる</div>
+                <svg viewBox="0 0 1000 400">
+                  <g paint-order="markers fill stroke">
+                    <rect
+                      x="0"
+                      y="97"
+                      :width="current_width"
+                      height="100"
+                      fill="#ff0000bb"
+                    />
+                    <rect
+                      width="1000"
+                      height="100"
+                      y="97"
+                      fill="#646464"
+                      fill-opacity=".157"
+                      opacity=".98"
+                      ry="0"
+                    />
+                  </g>
+                </svg>
+                <div>息を吸い込む</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script>
+      var app = new Vue({
+        el: "#app",
+        data: {
+          pageID: 1,
+          title: "Breathe Instructor",
+          sub_title: "",
+          cnt: 0,
+          time: 0,
+          current_width: 0,
+          init_width: 0,
+          display_time: "経過時間",
+          timer: null,
+          timer_interval: 10,
+          breath_interval: 10000,
+          breath_interval_str: "0",
+          waiting_time: 3,
+        },
+        mounted: function () {},
+        methods: {
+          gotoPage: function (PageID) {
+            app.pageID = PageID;
+            $(window).scrollTop(0);
+          },
+          start: function () {
+            if (app.timer != null) {
+              //タイマーが動きっぱなしなら、一度とめる
+              clearInterval(app.timer);
+              app.timer = null;
+            }
+            app.cnt = 0;
+            app.time = 0;
+            let offset_cnt = (app.waiting_time / app.timer_interval) * 1000;
+            app.timer = setInterval(function () {
+              app.cnt++;
+              if (app.cnt < offset_cnt) {
+                //3秒はまつ
+                app.current_width = app.init_width;
+                app.display_time = `開始まで${
+                  app.waiting_time -
+                  parseInt((app.cnt * app.timer_interval) / 1000)
+                }秒`;
+              } else {
+                app.display_time = `${
+                  parseInt((app.cnt * app.timer_interval) / 1000) -
+                  app.waiting_time
+                }秒経過`;
+                app.current_width =
+                  500 *
+                  (Math.sin(
+                    (((app.cnt - offset_cnt) * app.timer_interval) /
+                      app.breath_interval) *
+                      2.0 *
+                      Math.PI -
+                      Math.PI / 2
+                  ) +
+                    1);
+              }
+            }, app.timer_interval);
+          },
+
+          stop: function () {
+            clearInterval(app.timer);
+            app.timer = null;
+          },
+        },
+      });
+    </script>
+  </body>
+</html>
